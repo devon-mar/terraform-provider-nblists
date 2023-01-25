@@ -1,4 +1,4 @@
-module github.com/hashicorp/terraform-provider-scaffolding-framework
+module github.com/devon-mar/terraform-provider-nblists
 
 go 1.18
 
