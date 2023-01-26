@@ -64,12 +64,48 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+
+      - name: Checkout netbox-community/netbox-docker
+        uses: actions/checkout@v3
+        with:
+          repository: netbox-community/netbox-docker
+          path: netbox-docker
+          ref: ${{ matrix.netbox_docker_tag }}
+
+      - name: Setup netbox
+        run: |
+          pip install -r testdata/netbox_setup/requirements.txt
+          cp -r testdata/netbox/* ./netbox-docker/
+
+      - name: Start NetBox containers
+        working-directory: ./netbox-docker/
+        run:
+          docker-compose up -d
+
+      - run: go mod download
+
       - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
-      - run: go mod download
-      - env:
+
+      - name: Run acceptance tests (mock)
+        env:
+          TF_ACC: "1"
+        run: go test -v -cover ./internal/provider/
+        timeout-minutes: 10
+
+      - name: Create NetBox objects
+        env:
+          TEST_NBLISTS_URL: http://localhost:8000
+          TEST_NBLISTS_TOKEN: 0123456789abcdef0123456789abcdef01234567
+        run:
+          python ./testdata/netbox_setup/test_setup.py
+
+      - name: Run acceptance tests (live)
+        env:
+          TEST_NBLISTS_URL: http://localhost:8000
+          TEST_NBLISTS_TOKEN: 0123456789abcdef0123456789abcdef01234567
           TF_ACC: "1"
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
