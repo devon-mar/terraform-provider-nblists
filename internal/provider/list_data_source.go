@@ -84,7 +84,7 @@ func (d *ListDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				Optional:            true,
 			},
 			"no_cidr_single_ip": schema.BoolAttribute{
-				MarkdownDescription: "Populates `list_no_cidr` with elements from `list` but removes `/32` and `/128` from single IPs." +
+				MarkdownDescription: "Populates `list_no_cidr` with elements from `list` but removes `/32` and `/128` from single IPs. " +
 					"Useful for resources whose idempotency breaks when single IPs are in CIDR format.",
 				Optional: true,
 			},
