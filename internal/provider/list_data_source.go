@@ -64,11 +64,11 @@ func (d *ListDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				ElementType:         types.SetType{ElemType: types.StringType},
 			},
 			"as_cidr": schema.BoolAttribute{
-				MarkdownDescription: "Convenience attribute for setting the `as_cidr` parameter. Equivalent to `filter={\"as_cidr\"=true/false}`",
+				MarkdownDescription: "Convenience attribute for setting the `as_cidr` parameter. Equivalent to `filter={as_cidr=true/false}`",
 				Optional:            true,
 			},
 			"summarize": schema.BoolAttribute{
-				MarkdownDescription: "Convenience attribute for setting the `summarize` parameter. Equivalent to `filter={\"summarize\"=true/false}`",
+				MarkdownDescription: "Convenience attribute for setting the `summarize` parameter. Equivalent to `filter={summarize=true/false}`",
 				Optional:            true,
 			},
 			"min": schema.Int64Attribute{
