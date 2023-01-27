@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -207,31 +208,58 @@ func (d *ListDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			listNoCIDR = make([]string, 0, len(list))
 		}
 		for _, e := range list {
-			p, err := netip.ParsePrefix(e)
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Error parsing IP/prefix",
-					fmt.Sprintf("Error parsing %q: %v", e, err),
-				)
-				return
-			}
-			if data.SplitAF.ValueBool() {
-				if p.Addr().Is4() {
-					list4 = append(list4, e)
-				} else if p.Addr().Is6() {
-					list6 = append(list6, e)
-				} else {
+			if strings.Contains(e, "/") {
+				p, err := netip.ParsePrefix(e)
+				if err != nil {
 					resp.Diagnostics.AddError(
-						"IP/prefix is not IPv4 or IPv6",
-						fmt.Sprintf("%q is not IPv4 or IPv6", e),
+						"Error parsing IP/prefix",
+						fmt.Sprintf("Error parsing %q: %v", e, err),
 					)
 					return
 				}
-			}
-			if data.NoCIDRSingleIP.ValueBool() {
-				if p.IsSingleIP() {
-					listNoCIDR = append(listNoCIDR, p.Addr().String())
-				} else {
+				if data.SplitAF.ValueBool() {
+					if p.Addr().Is4() {
+						list4 = append(list4, e)
+					} else if p.Addr().Is6() {
+						list6 = append(list6, e)
+					} else {
+						resp.Diagnostics.AddError(
+							"IP/prefix is not IPv4 or IPv6",
+							fmt.Sprintf("%q is not IPv4 or IPv6", e),
+						)
+						return
+					}
+				}
+				if data.NoCIDRSingleIP.ValueBool() {
+					if p.IsSingleIP() {
+						listNoCIDR = append(listNoCIDR, p.Addr().String())
+					} else {
+						listNoCIDR = append(listNoCIDR, e)
+					}
+				}
+			} else {
+				p, err := netip.ParseAddr(e)
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error parsing IP",
+						fmt.Sprintf("Error parsing %q: %v", e, err),
+					)
+					return
+				}
+				if data.SplitAF.ValueBool() {
+					if p.Is4() {
+						list4 = append(list4, e)
+					} else if p.Is6() {
+						list6 = append(list6, e)
+					} else {
+						resp.Diagnostics.AddError(
+							"IP is not IPv4 or IPv6",
+							fmt.Sprintf("%q is not IPv4 or IPv6", e),
+						)
+						return
+					}
+				}
+				if data.NoCIDRSingleIP.ValueBool() {
 					listNoCIDR = append(listNoCIDR, e)
 				}
 			}
