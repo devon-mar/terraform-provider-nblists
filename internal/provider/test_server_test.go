@@ -61,5 +61,8 @@ func (h *testListsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Add(contentTypeHeader, contentTypeJSON)
 	}
-	json.NewEncoder(w).Encode(list)
+	err := json.NewEncoder(w).Encode(list)
+	if err != nil {
+		h.t.Fatalf("error encoding json for %q: %v", r.RequestURI, err)
+	}
 }
