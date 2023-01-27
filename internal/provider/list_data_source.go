@@ -7,9 +7,11 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -36,6 +38,7 @@ type ListDataSourceModel struct {
 	List6          types.List   `tfsdk:"list6"`
 	ListNoCIDR     types.List   `tfsdk:"list_no_cidr"`
 	AsCIDR         types.Bool   `tfsdk:"as_cidr"`
+	Family         types.Int64  `tfsdk:"family"`
 	NoCIDRSingleIP types.Bool   `tfsdk:"no_cidr_single_ip"`
 	Summarize      types.Bool   `tfsdk:"summarize"`
 	Min            types.Int64  `tfsdk:"min"`
@@ -64,11 +67,18 @@ func (d *ListDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				ElementType:         types.SetType{ElemType: types.StringType},
 			},
 			"as_cidr": schema.BoolAttribute{
-				MarkdownDescription: "Convenience attribute for setting the `as_cidr` parameter. Equivalent to `filter={as_cidr=true/false}`",
+				MarkdownDescription: "Convenience attribute for setting the `as_cidr` parameter. Equivalent to `filter={as_cidr=true/false}`.",
 				Optional:            true,
 			},
+			"family": schema.Int64Attribute{
+				MarkdownDescription: "Convenience attribute for setting the `family` parameter. Equivalent to `filter={family=4/6}`.",
+				Optional:            true,
+				Validators: []validator.Int64{
+					int64validator.OneOf(4, 6),
+				},
+			},
 			"summarize": schema.BoolAttribute{
-				MarkdownDescription: "Convenience attribute for setting the `summarize` parameter. Equivalent to `filter={summarize=true/false}`",
+				MarkdownDescription: "Convenience attribute for setting the `summarize` parameter. Equivalent to `filter={summarize=true/false}`.",
 				Optional:            true,
 			},
 			"min": schema.Int64Attribute{
@@ -155,6 +165,9 @@ func (d *ListDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 	if !data.Summarize.IsNull() {
 		filter["summarize"] = []string{strconv.FormatBool(data.Summarize.ValueBool())}
+	}
+	if !data.Family.IsNull() {
+		filter["family"] = []string{strconv.Itoa(int(data.Family.ValueInt64()))}
 	}
 
 	list, err := d.client.get(ctx, data.Endpoint.ValueString(), filter)

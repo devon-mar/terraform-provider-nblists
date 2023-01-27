@@ -55,13 +55,14 @@ resource "some_resource" "r" {
 
 ### Optional
 
-- `as_cidr` (Boolean) Convenience attribute for setting the `as_cidr` parameter. Equivalent to `filter={"as_cidr"=true/false}`
+- `as_cidr` (Boolean) Convenience attribute for setting the `as_cidr` parameter. Equivalent to `filter={as_cidr=true/false}`.
+- `family` (Number) Convenience attribute for setting the `family` parameter. Equivalent to `filter={family=4/6}`.
 - `filter` (Map of Set of String) Filters for the endpoint.
 - `max` (Number) Throw an error if the number of IPs/prefixes is greater than `max`.
 - `min` (Number) Throw an error if the number of IPs/prefixes is less than `min`.
-- `no_cidr_single_ip` (Boolean) Populates `list_no_cidr` with elements from `list` but removes `/32` and `/128` from single IPs.Useful for resources whose idempotency breaks when single IPs are in CIDR format.
+- `no_cidr_single_ip` (Boolean) Populates `list_no_cidr` with elements from `list` but removes `/32` and `/128` from single IPs. Useful for resources whose idempotency breaks when single IPs are in CIDR format.
 - `split_af` (Boolean) Populate `list4` and `list6` with the IPv4 and IPv6 addresses from `list`.
-- `summarize` (Boolean) Convenience attribute for setting the `summarize` parameter. Equivalent to `filter={"summarize"=true/false}`
+- `summarize` (Boolean) Convenience attribute for setting the `summarize` parameter. Equivalent to `filter={summarize=true/false}`.
 
 ### Read-Only
 

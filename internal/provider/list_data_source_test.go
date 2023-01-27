@@ -22,6 +22,8 @@ func TestListDataSource(t *testing.T) {
 		h.addList("ip-addresses", map[string][]string{"tag": {"1"}}, []string{"192.0.2.1/32"})
 		h.addList("ip-addresses", map[string][]string{"tag": {"2"}}, []string{})
 		h.addList("ip-addresses", map[string][]string{"tag": {"3"}, "as_cidr": {"true"}}, []string{"192.0.2.3/32", "2001:db8::3/128"})
+		h.addList("ip-addresses", map[string][]string{"tag": {"3"}, "family": {"4"}}, []string{"192.0.2.3/32"})
+		h.addList("ip-addresses", map[string][]string{"tag": {"3"}, "family": {"6"}}, []string{"2001:db8::3/128"})
 		h.addList("ip-addresses", map[string][]string{"tag": {"4"}, "as_cidr": {"false"}, "summarize": {"false"}}, []string{"192.0.2.4"})
 		h.addList("prefixes", nil, []string{"192.0.2.0/26"})
 		h.addList("ip-addresses", map[string][]string{"tag": {"5"}}, []string{"192.0.2.5/32"})
@@ -69,6 +71,20 @@ data "nblists_list" "three" {
 	as_cidr = true
 	split_af = true
 	no_cidr_single_ip = true
+}
+
+// family=4
+data "nblists_list" "three4" {
+	endpoint = "ip-addresses"
+	filter = { "tag" = ["3"] }
+	family = 4
+}
+
+// family=6
+data "nblists_list" "three6" {
+	endpoint = "ip-addresses"
+	filter = { "tag" = ["3"] }
+	family = 6
 }
 
 // as_cidr=False
@@ -184,6 +200,28 @@ data "nblists_list" "nine" {
 					resource.TestCheckResourceAttr(
 						"data.nblists_list.three",
 						"list6.#",
+						"1",
+					),
+
+					resource.TestCheckResourceAttr(
+						"data.nblists_list.three4",
+						"list.0",
+						"192.0.2.3/32",
+					),
+					resource.TestCheckResourceAttr(
+						"data.nblists_list.three4",
+						"list.#",
+						"1",
+					),
+
+					resource.TestCheckResourceAttr(
+						"data.nblists_list.three6",
+						"list.0",
+						"2001:db8::3/128",
+					),
+					resource.TestCheckResourceAttr(
+						"data.nblists_list.three6",
+						"list.#",
 						"1",
 					),
 
