@@ -3,12 +3,14 @@
 page_title: "nblists Provider"
 subcategory: ""
 description: |-
-  
+  A Terraform provider to interact with the
+  NetBox Lists https://github.com/devon-mar/netbox-lists plugin for NetBox.
 ---
 
 # nblists Provider
 
-
+A Terraform provider to interact with the
+[NetBox Lists](https://github.com/devon-mar/netbox-lists) plugin for NetBox.
 
 ## Example Usage
 

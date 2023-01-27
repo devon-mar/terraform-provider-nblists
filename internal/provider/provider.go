@@ -51,6 +51,9 @@ func (p *NBListsProvider) Metadata(ctx context.Context, req provider.MetadataReq
 
 func (p *NBListsProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: `A Terraform provider to interact with the
+[NetBox Lists](https://github.com/devon-mar/netbox-lists) plugin for NetBox.
+`,
 		Attributes: map[string]schema.Attribute{
 			"url": schema.StringAttribute{
 				MarkdownDescription: "NetBox URL. May also be provided via `" + envURL + "` environment variable.",
