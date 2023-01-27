@@ -11,7 +11,7 @@ func TestNewListsClient(t *testing.T) {
 	token := "abcde"
 	url := "https://netbox.example.com"
 
-	c := newListsClient(url, token, true)
+	c := newListsClient(url, token, true, 10)
 	if c.url != url {
 		t.Errorf("got url %s, want %s", c.url, url)
 	}
@@ -79,7 +79,7 @@ func TestGet(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			listsClient := newListsClient(s.URL+"/api/plugins/lists", token, tc.allowEmpty)
+			listsClient := newListsClient(s.URL+"/api/plugins/lists", token, tc.allowEmpty, 10)
 			have, err := listsClient.get(context.Background(), tc.endpoint, tc.filter)
 			if err == nil && tc.wantError {
 				t.Errorf("expected an error")

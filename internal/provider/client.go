@@ -23,13 +23,13 @@ type listsClient struct {
 	client     *http.Client
 }
 
-func newListsClient(url string, token string, allowEmpty bool) *listsClient {
+func newListsClient(url string, token string, allowEmpty bool, timeout int) *listsClient {
 	return &listsClient{
 		url:        url,
 		allowEmpty: allowEmpty,
 		auth:       "Token " + token,
 		client: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: time.Duration(timeout) * time.Second,
 		},
 	}
 }

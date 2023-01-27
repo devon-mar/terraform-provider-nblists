@@ -243,6 +243,7 @@ provider "nblists" {
     url = "%s"
 	token = "%s"
 	allow_empty_filter = true
+	request_timeout = 20
 }
 
 data "nblists_list" "test" {

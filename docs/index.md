@@ -28,7 +28,8 @@ provider "nblists" {
 
 ### Optional
 
-- `allow_empty_filter` (Boolean) Allow using an empty filter.May also be provided via `NETBOX_LISTS_ALLOW_EMPTY_FILTER` environment variable.
-- `lists_path` (String) Path to the NetBox Lists plugin to be appended to `url`.May also be provided via `NETBOX_LISTS_PATH` environment variable.
+- `allow_empty_filter` (Boolean) Allow using an empty filter. May also be provided via `NETBOX_LISTS_ALLOW_EMPTY_FILTER` environment variable. Defaults to `false`.
+- `lists_path` (String) Path to the NetBox Lists plugin to be appended to `url`. May also be provided via `NETBOX_LISTS_PATH` environment variable. Defaults to `/api/plugins/lists`.
+- `request_timeout` (Number) HTTP request timeout in seconds. May also be provided via `NETBOX_LISTS_REQUEST_TIMEOUT` environment variable. Defaults to `10`.
 - `token` (String, Sensitive) NetBox token. May also be provided via `NETBOX_TOKEN` environment variable.
 - `url` (String) NetBox URL. May also be provided via `NETBOX_URL` environment variable.

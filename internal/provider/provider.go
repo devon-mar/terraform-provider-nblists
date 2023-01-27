@@ -16,11 +16,14 @@ import (
 )
 
 const (
-	defaultListsPath    = "/api/plugins/lists"
+	defaultListsPath      = "/api/plugins/lists"
+	defaultRequestTimeout = 10
+
 	envURL              = "NETBOX_URL"
 	envToken            = "NETBOX_TOKEN"
 	envListsPath        = "NETBOX_LISTS_PATH"
 	envAllowEmptyFilter = "NETBOX_LISTS_ALLOW_EMPTY_FILTER"
+	envRequestTimeout   = "NETBOX_LISTS_REQUEST_TIMEOUT"
 
 	attrURL = "url"
 )
@@ -42,6 +45,7 @@ type NBListsProviderModel struct {
 	Token            types.String `tfsdk:"token"`
 	ListsPath        types.String `tfsdk:"lists_path"`
 	AllowEmptyFilter types.Bool   `tfsdk:"allow_empty_filter"`
+	RequestTimeout   types.Int64  `tfsdk:"request_timeout"`
 }
 
 func (p *NBListsProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -65,13 +69,19 @@ func (p *NBListsProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Sensitive:           true,
 			},
 			"lists_path": schema.StringAttribute{
-				MarkdownDescription: "Path to the NetBox Lists plugin to be appended to `url`." +
-					"May also be provided via `" + envListsPath + "` environment variable.",
+				MarkdownDescription: "Path to the NetBox Lists plugin to be appended to `url`. " +
+					"May also be provided via `" + envListsPath + "` environment variable. " +
+					"Defaults to `" + defaultListsPath + "`.",
 				Optional: true,
 			},
 			"allow_empty_filter": schema.BoolAttribute{
-				MarkdownDescription: "Allow using an empty filter." +
-					"May also be provided via `" + envAllowEmptyFilter + "` environment variable.",
+				MarkdownDescription: "Allow using an empty filter. " +
+					"May also be provided via `" + envAllowEmptyFilter + "` environment variable. Defaults to `false`.",
+				Optional: true,
+			},
+			"request_timeout": schema.Int64Attribute{
+				MarkdownDescription: "HTTP request timeout in seconds. " +
+					"May also be provided via `" + envRequestTimeout + "` environment variable. Defaults to `10`.",
 				Optional: true,
 			},
 		},
@@ -83,6 +93,7 @@ func (p *NBListsProvider) Configure(ctx context.Context, req provider.ConfigureR
 	token := os.Getenv(envToken)
 	listsPath := os.Getenv(envListsPath)
 	allowEmpty, _ := strconv.ParseBool(os.Getenv(envAllowEmptyFilter))
+	requestTimeout, _ := strconv.ParseInt(os.Getenv(envRequestTimeout), 10, 64)
 
 	var data NBListsProviderModel
 
@@ -104,6 +115,12 @@ func (p *NBListsProvider) Configure(ctx context.Context, req provider.ConfigureR
 		listsPath = s
 	}
 	allowEmpty = allowEmpty || data.AllowEmptyFilter.ValueBool()
+	if v := data.RequestTimeout.ValueInt64(); v > 0 {
+		requestTimeout = v
+	}
+	if requestTimeout <= 0 {
+		requestTimeout = defaultRequestTimeout
+	}
 
 	if nbURL == "" {
 		resp.Diagnostics.AddAttributeError(
@@ -126,7 +143,7 @@ func (p *NBListsProvider) Configure(ctx context.Context, req provider.ConfigureR
 		return
 	}
 
-	resp.DataSourceData = newListsClient(fullUrl, token, allowEmpty)
+	resp.DataSourceData = newListsClient(fullUrl, token, allowEmpty, int(requestTimeout))
 }
 
 func (p *NBListsProvider) Resources(ctx context.Context) []func() resource.Resource {
