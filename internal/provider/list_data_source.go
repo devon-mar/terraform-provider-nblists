@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
@@ -275,7 +275,7 @@ func (d *ListDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		}
 	}
 
-	data.ID = types.StringValue(resource.UniqueId())
+	data.ID = types.StringValue(id.UniqueId())
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
