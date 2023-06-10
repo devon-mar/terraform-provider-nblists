@@ -71,5 +71,3 @@ resource "some_resource" "r" {
 - `list4` (List of String) List of IPv4 addresses/prefixes if `split_af` is `true`.
 - `list6` (List of String) List of IPv4 addresses/prefixes if `split_af` is `true`.
 - `list_no_cidr` (List of String) List of IP addresses/prefixes with prefix length removed for single IPs if `no_cidr_single_ip` is `true`.
-
-
