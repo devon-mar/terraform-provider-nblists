@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
@@ -40,11 +39,11 @@ func (h *testListsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "invalid method", http.StatusMethodNotAllowed)
 	}
-	if r.Header.Get(contentTypeHeader) != contentTypeJSON {
+	if r.Header.Get(headerAccept) != mediaTypeText {
 		http.Error(w, "invalid content type", http.StatusBadRequest)
 		return
 	}
-	if r.Header.Get(authorizationHeader) != "Token "+h.token {
+	if r.Header.Get(headerAuthorization) != "Token "+h.token {
 		http.Error(w, "invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -59,10 +58,18 @@ func (h *testListsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if ct := r.URL.Query().Get("ct"); ct != "" {
 		w.Header().Add(contentTypeHeader, ct)
 	} else {
-		w.Header().Add(contentTypeHeader, contentTypeJSON)
+		w.Header().Add(contentTypeHeader, "text/plain; charset=utf-8")
 	}
-	err := json.NewEncoder(w).Encode(list)
-	if err != nil {
-		h.t.Fatalf("error encoding json for %q: %v", r.RequestURI, err)
+
+	for _, ip := range list {
+		_, err := w.Write([]byte(ip))
+		if err != nil {
+			h.t.Fatalf("failed to write to body: %v", err)
+		}
+
+		_, err = w.Write([]byte("\n"))
+		if err != nil {
+			h.t.Fatalf("failed to write new line: %v", err)
+		}
 	}
 }

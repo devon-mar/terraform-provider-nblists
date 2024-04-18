@@ -51,7 +51,13 @@ func TestGet(t *testing.T) {
 		},
 		"wrongcontenttype": {
 			endpoint:   "/empty",
-			filter:     map[string][]string{"ct": {"text/plain"}},
+			filter:     map[string][]string{"ct": {"application/json"}},
+			wantError:  true,
+			allowEmpty: true,
+		},
+		"wrongcharset": {
+			endpoint:   "/empty",
+			filter:     map[string][]string{"ct": {"text/plain; charset=abc"}},
 			wantError:  true,
 			allowEmpty: true,
 		},
@@ -60,6 +66,11 @@ func TestGet(t *testing.T) {
 			filter:     map[string][]string{"family": {"4"}},
 			want:       []string{"192.0.2.10/32"},
 			allowEmpty: false,
+		},
+		"nocharset": {
+			endpoint: "/nocharset",
+			filter:   map[string][]string{"ct": {"text/plain"}},
+			want:     []string{"192.0.2.42/32"},
 		},
 		"not_found": {
 			endpoint:   "404",
@@ -73,7 +84,9 @@ func TestGet(t *testing.T) {
 	h.addList("nofilter", nil, []string{"192.0.2.1", "192.0.2.2"})
 	h.addList("filter", map[string][]string{"family": {"4"}}, []string{"192.0.2.10/32"})
 	h.addList("empty", nil, []string{})
-	h.addList("empty", map[string][]string{"ct": {"text/plain"}}, []string{})
+	h.addList("empty", map[string][]string{"ct": {"application/json"}}, []string{})
+	h.addList("empty", map[string][]string{"ct": {"text/plain; charset=abc"}}, []string{})
+	h.addList("nocharset", map[string][]string{"ct": {"text/plain"}}, []string{"192.0.2.42/32"})
 	s := httptest.NewServer(h)
 	defer s.Close()
 
