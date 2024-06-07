@@ -1,19 +1,21 @@
 package provider
 
 import (
+	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"time"
 )
 
 const (
-	authorizationHeader = "Authorization"
+	headerAuthorization = "Authorization"
+	headerAccept        = "Accept"
 	contentTypeHeader   = "Content-Type"
-	contentTypeJSON     = "application/json"
+	mediaTypeText       = "text/plain"
 )
 
 type listsClient struct {
@@ -48,8 +50,8 @@ func (c *listsClient) get(ctx context.Context, endpoint string, filter map[strin
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add(authorizationHeader, c.auth)
-	req.Header.Add(contentTypeHeader, contentTypeJSON)
+	req.Header.Add(headerAuthorization, c.auth)
+	req.Header.Add(headerAccept, mediaTypeText)
 
 	if filter != nil {
 		req.URL.RawQuery = url.Values(filter).Encode()
@@ -58,17 +60,31 @@ func (c *listsClient) get(ctx context.Context, endpoint string, filter map[strin
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
-	} else if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("NetBox returned status code %d", resp.StatusCode)
-	} else if ct := resp.Header.Get(contentTypeHeader); ct != contentTypeJSON {
-		return nil, fmt.Errorf("invalid content type %q", ct)
 	}
 	defer resp.Body.Close()
 
-	ret := []string{}
-	err = json.NewDecoder(resp.Body).Decode(&ret)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("NetBox returned status code %d", resp.StatusCode)
+	}
+
+	ct := resp.Header.Get(contentTypeHeader)
+
+	mediaType, params, err := mime.ParseMediaType(ct)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", contentTypeHeader, err)
+	}
+	if mediaType != mediaTypeText || (params["charset"] != "" && params["charset"] != "utf-8") {
+		return nil, fmt.Errorf("invalid content type %q", ct)
+	}
+
+	ret := []string{}
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		ret = append(ret, scanner.Text())
+	}
+
+	if err = scanner.Err(); err != nil {
+		return nil, fmt.Errorf("scan: %w", err)
 	}
 
 	return ret, nil
