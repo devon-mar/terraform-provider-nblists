@@ -96,7 +96,7 @@ jobs:
       - name: Start NetBox containers
         working-directory: ./netbox-docker/
         run:
-          docker-compose up -d
+          docker compose up -d
 
       - run: go mod download
 
