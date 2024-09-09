@@ -1,0 +1,128 @@
+---
+# Based on
+# https://github.com/netbox-community/netbox-docker/blob/22486fefb5c4cc326bd091abeac5314eb7acd37f/docker-compose.yml
+services:
+  netbox: &netbox
+    build:
+      context: .
+      dockerfile: Dockerfile-Plugins
+    ports:
+      - 8000:8080
+    depends_on:
+      - postgres
+      - redis
+      - redis-cache
+    environment:
+      CORS_ORIGIN_ALLOW_ALL: "true"
+      DB_HOST: postgres
+      DB_NAME: &postgres_db netbox
+      DB_PASSWORD: &postgres_password J5brHrAXFLQSif0K
+      DB_USER: &postgres_user netbox
+      EMAIL_FROM: netbox@bar.com
+      EMAIL_PASSWORD:
+      EMAIL_PORT: "25"
+      EMAIL_SERVER: localhost
+      EMAIL_SSL_CERTFILE:
+      EMAIL_SSL_KEYFILE:
+      EMAIL_TIMEOUT: "5"
+      EMAIL_USERNAME: netbox
+      EMAIL_USE_SSL: "false"
+      EMAIL_USE_TLS: "false"
+      GRAPHQL_ENABLED: "true"
+      HOUSEKEEPING_INTERVAL: "86400"
+      MEDIA_ROOT: /opt/netbox/netbox/media
+      METRICS_ENABLED: "false"
+      REDIS_CACHE_DATABASE: "1"
+      REDIS_CACHE_HOST: redis-cache
+      REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY: "false"
+      REDIS_CACHE_PASSWORD: &redis_cache_password t4Ph722qJ5QHeQ1qfu36
+      REDIS_CACHE_SSL: "false"
+      REDIS_DATABASE: "0"
+      REDIS_HOST: redis
+      REDIS_INSECURE_SKIP_TLS_VERIFY: "false"
+      REDIS_PASSWORD: &redis_password H733Kdjndks81
+      REDIS_SSL: "false"
+      RELEASE_CHECK_URL: https://api.github.com/repos/netbox-community/netbox/releases
+      SECRET_KEY: r(m)9nLGnz((_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X
+      WEBHOOKS_ENABLED: "true"
+      SKIP_SUPERUSER: "false"
+      SUPERUSER_API_TOKEN: "0123456789abcdef0123456789abcdef01234567"
+      SUPERUSER_EMAIL: "admin"
+      SUPERUSER_NAME: "admin"
+      SUPERUSER_PASSWORD: "admin"
+    user: "unit:root"
+    volumes:
+      - ./configuration/plugins.py:/etc/netbox/config/plugins.py:ro
+    healthcheck:
+      start_period: 180s
+      timeout: 3s
+      interval: 15s
+      test: curl -f http://localhost:8080/login/ || exit 1
+  netbox-worker:
+    <<: *netbox
+    ports: []
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+      - /opt/netbox/venv/bin/python
+      - /opt/netbox/netbox/manage.py
+      - rqworker
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q rqworker || exit 1"
+
+  # postgres
+  postgres:
+    image: docker.io/postgres:16-alpine
+    environment:
+      POSTGRES_DB: *postgres_db
+      POSTGRES_PASSWORD: *postgres_password
+      POSTGRES_USER: *postgres_user
+    volumes:
+      - netbox-postgres-data:/var/lib/postgresql/data
+
+  # redis
+  redis:
+    image: &redis-image docker.io/valkey/valkey:8.0-alpine
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    environment:
+      REDIS_PASSWORD: *redis_password
+    volumes:
+      - netbox-redis-data:/data
+    healthcheck: &redis-healthcheck
+      test: '[ $$(valkey-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
+  redis-cache:
+    image: *redis-image
+    command:
+      - sh
+      - -c # this is to evaluate the $REDIS_PASSWORD from the env
+      - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    environment:
+      REDIS_PASSWORD: *redis_cache_password
+    healthcheck: *redis-healthcheck
+    volumes:
+      - netbox-redis-cache-data:/data
+
+volumes:
+  netbox-media-files:
+    driver: local
+  netbox-postgres-data:
+    driver: local
+  netbox-redis-cache-data:
+    driver: local
+  netbox-redis-data:
+    driver: local
+  netbox-reports-files:
+    driver: local
+  netbox-scripts-files:
+    driver: local
