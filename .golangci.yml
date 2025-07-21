@@ -1,8 +1,15 @@
 ---
+version: "2"
 linters:
   enable:
-    - gofumpt
-    - misspell
     - bodyclose
     - forbidigo
-    - exportloopref
+    - misspell
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.ReadCloser).Close
+      verbose: true
+formatters:
+  enable:
+    - gofumpt
