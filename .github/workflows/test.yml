@@ -116,3 +116,8 @@ jobs:
           TF_ACC: "1"
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10
+
+      - name: Show Docker logs
+        if: ${{ always() }}
+        working-directory: ./testdata/netbox/
+        run: docker compose logs
