@@ -1,4 +1,5 @@
 import pynetbox
+import requests
 import os
 from typing import Dict, List
 from argparse import ArgumentParser
@@ -46,6 +47,19 @@ def create_prefixes(nb: pynetbox.api):
             nb.ipam.prefixes.create(prefix=p, tags=[tag.id])
 
 
+def create_netbox_token(url: str, username: str, password: str) -> str:
+    resp = requests.post(
+        f"{url}/api/users/tokens/provision/",
+        json={"username": username, "password": password},
+    )
+
+    resp.raise_for_status()
+
+    data = resp.json()
+    assert data.get("version") == 2
+    return f"nbt_{data['key']}.{data['token']}"
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument(
@@ -53,9 +67,18 @@ def main():
     )
     args = parser.parse_args()
 
-    nb = pynetbox.api(
-        os.environ["TEST_NBLISTS_URL"], token=os.environ["TEST_NBLISTS_TOKEN"]
-    )
+    url = os.environ["TEST_NBLISTS_URL"]
+    token = os.environ.get("TEST_NBLISTS_TOKEN")
+    if token is None:
+        username = os.environ["TEST_NBLISTS_USERNAME"]
+        password = os.environ["TEST_NBLISTS_PASSWORD"]
+        token = create_netbox_token(url, username, password)
+
+        if github_output := os.environ.get("GITHUB_OUTPUT"):
+            with open(github_output, "a") as f:
+                f.write(f"token={token}\n")
+
+    nb = pynetbox.api(url, token=token)
     if args.delete:
         nb.ipam.ip_addresses.delete(nb.ipam.ip_addresses.all())
         nb.ipam.prefixes.delete(nb.ipam.prefixes.all())

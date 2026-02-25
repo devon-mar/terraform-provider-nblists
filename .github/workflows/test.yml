@@ -104,15 +104,17 @@ jobs:
         timeout-minutes: 10
 
       - name: Create NetBox objects
+        id: nbcreate
         env:
           TEST_NBLISTS_URL: http://localhost:8000
-          TEST_NBLISTS_TOKEN: 0123456789abcdef0123456789abcdef01234567
+          TEST_NBLISTS_USERNAME: admin
+          TEST_NBLISTS_PASSWORD: admin
         run: python ./testdata/netbox_setup/test_setup.py
 
       - name: Run acceptance tests (live)
         env:
           TEST_NBLISTS_URL: http://localhost:8000
-          TEST_NBLISTS_TOKEN: 0123456789abcdef0123456789abcdef01234567
+          TEST_NBLISTS_TOKEN: ${{ steps.nbcreate.outputs.token }}
           TF_ACC: "1"
         run: go test -v -cover ./internal/provider/
         timeout-minutes: 10

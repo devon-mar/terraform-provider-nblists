@@ -1,4 +1,4 @@
-FROM netboxcommunity/netbox:latest
+FROM netboxcommunity/netbox:v4.5.2
 
 COPY ./plugin_requirements.txt /
 RUN /usr/local/bin/uv pip install -r /plugin_requirements.txt
